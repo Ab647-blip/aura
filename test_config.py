@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from aura.core.config import get_api_key, get_config, validate_config, MissingAPIKeyError
+from aura.core.config import  MODEL,API_KEY, get_config, validate_config, MissingAPIKeyError
 from aura.core.llm_client import call_llm, APIError
 
 
@@ -14,8 +14,9 @@ def main():
     print("=" * 60)
     
     try:
+        print(f"Model being used: {MODEL}")
         print("\nTest 1: Loading API Key")
-        api_key = get_api_key()
+        api_key = API_KEY
         print(f"API Key loaded: {api_key[:10]}...")
         print(f"Key length: {len(api_key)} characters")
         

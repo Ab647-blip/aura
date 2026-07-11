@@ -52,6 +52,9 @@ def validate_config() -> bool:
 
     if not (0 <= TOP_P <= 1):
         raise ConfigurationError("TOP_P must be between 0 and 1.")
+    
+    if TOP_K <= 0:
+        raise ConfigurationError("TOP_K must be greater than zero.")
 
     return True
 
