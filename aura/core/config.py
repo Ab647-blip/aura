@@ -35,6 +35,12 @@ TOP_K = int(os.getenv("AURA_TOP_K", "40"))
 
 CONTEXT_BUDGET = int(os.getenv("AURA_CONTEXT_BUDGET", "6000"))
 
+EMBED_MODEL = os.getenv("AURA_EMBED_MODEL", "gemini-embedding-001")
+
+DOCS_DIR = PROJECT_ROOT / "docs"
+INDEX_PATH = PROJECT_ROOT / "store" / "index.json"
+LOG_PATH = PROJECT_ROOT / "logs" / "decisions.jsonl"
+
 
 def validate_config() -> bool:
 

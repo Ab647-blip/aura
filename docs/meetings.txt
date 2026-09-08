@@ -1,0 +1,17 @@
+Meeting notes
+
+March 4, pricing review with Sana and Bilal.
+We agreed to hold the Pro tier at 29 dollars a month through the end of Q3 rather
+than raising it to 39. Sana's argument won: two of our three biggest accounts renew
+in August and a price change lands badly right before a renewal conversation.
+Revisit in October with actual renewal numbers in hand.
+
+March 11, infrastructure.
+Bilal wants to move the job queue off Redis onto Postgres so we stop running a second
+datastore for what is basically a table with a lock. I agreed in principle. Blocked
+until the migration in April is finished because we are not touching two things at once.
+
+March 18, hiring.
+We have budget for one engineer, not two. The consensus was backend over frontend,
+because the frontend work is bursty and the backend work is constant. Job post goes
+out after the April migration.
