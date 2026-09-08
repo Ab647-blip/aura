@@ -32,7 +32,7 @@ def run_chat() -> None:
         print(f"Aura: {answer['text']}")
 
         if answer["tool"]:
-            print(f"[{answer['tool']} in {answer['seconds']:.1f}s]")
+            print(f"[{answer['tool']} in {answer['tool_seconds']:.1f}s]")
 
         history.append(
             {

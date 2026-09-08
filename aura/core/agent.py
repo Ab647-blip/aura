@@ -8,6 +8,7 @@ from aura.core.config import MAX_TOKENS, MODEL, TEMPERATURE, TOP_K, TOP_P
 from aura.core.llm_client import build_contents, client, extract_text, extract_usage
 from aura.core.prompts import AURA_SYSTEM_PROMPT, ROUTING_RULES
 from aura.core.retrieval import search_notes
+from aura.core.trace import log_decision
 from aura.core.web import web_search
 
 SYSTEM = f"{AURA_SYSTEM_PROMPT}\n\n{ROUTING_RULES}"
@@ -24,8 +25,14 @@ def declare(name: str, description: str, argument: str) -> types.FunctionDeclara
         description=description,
         parameters=types.Schema(
             type=types.Type.OBJECT,
-            properties={"query": types.Schema(type=types.Type.STRING, description=argument)},
-            required=["query"],
+            properties={
+                "query": types.Schema(type=types.Type.STRING, description=argument),
+                "reason": types.Schema(
+                    type=types.Type.STRING,
+                    description="One short sentence on why this tool fits the question.",
+                ),
+            },
+            required=["query", "reason"],
         ),
     )
 
@@ -55,43 +62,24 @@ def settings(with_tools: bool) -> types.GenerateContentConfig:
     )
 
 
-def run_tool(call) -> tuple[str, float]:
+def run_tool(name: str, args: dict) -> tuple[str, float]:
     started = time.perf_counter()
 
     try:
-        output = TOOLS[call.name](**dict(call.args))
+        output = TOOLS[name](**args)
     except KeyError:
-        output = f"{call.name} is not a tool Aura has."
+        output = f"{name} is not a tool Aura has."
     except Exception as e:
-        output = f"{call.name} failed: {e}"
+        output = f"{name} failed: {e}"
 
     return output, time.perf_counter() - started
 
 
-def respond(history: list[dict[str, str]]) -> dict:
-    """Let the model decide between answering directly and calling one of the tools."""
+def answer_from_tool(contents, first, call) -> dict:
+    args = dict(call.args)
+    reason = args.pop("reason", "")
 
-    contents = build_contents(history)
-    first = client.models.generate_content(
-        model=MODEL,
-        contents=contents,
-        config=settings(with_tools=True),
-    )
-
-    calls = first.function_calls or []
-
-    if not calls:
-        return {
-            "text": extract_text(first),
-            "tool": None,
-            "query": None,
-            "result": None,
-            "seconds": 0.0,
-            "usage": extract_usage(first),
-        }
-
-    call = calls[0]
-    output, seconds = run_tool(call)
+    output, tool_seconds = run_tool(call.name, args)
 
     contents.append(first.candidates[0].content)
     contents.append(
@@ -107,17 +95,52 @@ def respond(history: list[dict[str, str]]) -> dict:
         config=settings(with_tools=False),
     )
 
-    first_usage = extract_usage(first)
-    final_usage = extract_usage(final)
+    spent = extract_usage(first)
+    also_spent = extract_usage(final)
 
     return {
         "text": extract_text(final),
         "tool": call.name,
-        "query": dict(call.args).get("query", ""),
+        "query": args.get("query", ""),
+        "reason": reason,
         "result": output,
-        "seconds": seconds,
+        "tool_seconds": tool_seconds,
         "usage": {
-            "input_tokens": first_usage["input_tokens"] + final_usage["input_tokens"],
-            "output_tokens": first_usage["output_tokens"] + final_usage["output_tokens"],
+            "input_tokens": spent["input_tokens"] + also_spent["input_tokens"],
+            "output_tokens": spent["output_tokens"] + also_spent["output_tokens"],
         },
     }
+
+
+def respond(history: list[dict[str, str]]) -> dict:
+    """Let the model decide between answering directly and calling one of the tools."""
+
+    started = time.perf_counter()
+
+    contents = build_contents(history)
+    first = client.models.generate_content(
+        model=MODEL,
+        contents=contents,
+        config=settings(with_tools=True),
+    )
+
+    calls = first.function_calls or []
+
+    if calls:
+        answer = answer_from_tool(contents, first, calls[0])
+    else:
+        answer = {
+            "text": extract_text(first),
+            "tool": None,
+            "query": None,
+            "reason": None,
+            "result": None,
+            "tool_seconds": 0.0,
+            "usage": extract_usage(first),
+        }
+
+    answer["total_seconds"] = time.perf_counter() - started
+
+    log_decision(history[-1]["content"], answer)
+
+    return answer
