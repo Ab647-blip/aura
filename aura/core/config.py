@@ -1,91 +1,80 @@
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 
 from dotenv import load_dotenv
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+ENV_FILE = PROJECT_ROOT / ".env"
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
+load_dotenv(ENV_FILE)
 class MissingAPIKeyError(Exception):
-    def __init__(self):
-        super().__init__(
-            "\n" + "=" * 60 + "\n"
-            "GOOGLE_API_KEY not found in environment variables!\n"
-        )
+       "Raised when GOOGLE_API_KEY is missing."
 
 
 class ConfigurationError(Exception):
-    def __init__(self, message: str):
-        super().__init__(f"\nConfiguration Error: {message}\n")
+      "Raised when configuration is invalid."
 
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
-def get_api_key() -> str:
-    project_root = Path(__file__).parent.parent.parent
-    env_file = project_root / '.env'
-    
-    if env_file.exists():
-        load_dotenv(env_file)
-    else:
-        load_dotenv()
-    
-    api_key = os.getenv("GOOGLE_API_KEY")
-    
-    if not api_key:
-        raise MissingAPIKeyError()
-    
-    if api_key == "your-gemini-api-key-here":
-        raise MissingAPIKeyError()
-    
-    api_key = api_key.strip()
-    return api_key
+if not API_KEY:
+    raise MissingAPIKeyError(
+        "GOOGLE_API_KEY was not found.\n"
+    )
 
+MODEL = os.getenv("AURA_MODEL", "gemini-2.5-flash")
 
-def get_config() -> Dict[str, Any]:
-    return {
-        "api_key": get_api_key(),
-        "model": os.getenv("AURA_MODEL", "gemini-2.5-pro-exp-03-25"),
-        "max_tokens": int(os.getenv("AURA_MAX_TOKENS", 1024)),
-        "context_budget": int(os.getenv("AURA_CONTEXT_BUDGET", 6000)),
-        "project_root": str(Path(__file__).parent.parent.parent),
-        "output_dir": str(Path(__file__).parent.parent.parent / "output"),
-    }
+MAX_TOKENS = int(os.getenv("AURA_MAX_TOKENS", "1024"))
+
+TEMPERATURE = float(os.getenv("AURA_TEMPERATURE", "0.7"))
+
+TOP_P = float(os.getenv("AURA_TOP_P", "0.95"))
+
+TOP_K = int(os.getenv("AURA_TOP_K", "40"))
+
+CONTEXT_BUDGET = int(os.getenv("AURA_CONTEXT_BUDGET", "6000"))
+
+EMBED_MODEL = os.getenv("AURA_EMBED_MODEL", "gemini-embedding-001")
+
+DOCS_DIR = PROJECT_ROOT / "docs"
+INDEX_PATH = PROJECT_ROOT / "store" / "index.json"
+LOG_PATH = PROJECT_ROOT / "logs" / "decisions.jsonl"
 
 
 def validate_config() -> bool:
-    try:
-        config = get_config()
-        
-        model = config['model']
-        if not model or not isinstance(model, str):
-            raise ConfigurationError(f"Invalid model name: {model}")
-        
-        max_tokens = config['max_tokens']
-        if max_tokens < 1 or max_tokens > 100000:
-            raise ConfigurationError(f"Invalid max_tokens: {max_tokens}")
-        
-        context_budget = config['context_budget']
-        if context_budget < 1:
-            raise ConfigurationError(f"Invalid context_budget: {context_budget}")
-        
-        return True
-        
-    except MissingAPIKeyError:
-        raise
-    except Exception as e:
-        raise ConfigurationError(f"Configuration validation failed: {str(e)}")
+
+    if not MODEL:
+        raise ConfigurationError("Model name cannot be empty.")
+
+    if MAX_TOKENS <= 0:
+        raise ConfigurationError("MAX_TOKENS must be greater than zero.")
+
+    if CONTEXT_BUDGET <= 0:
+        raise ConfigurationError("CONTEXT_BUDGET must be greater than zero.")
+
+    if not (0 <= TEMPERATURE <= 2):
+        raise ConfigurationError("TEMPERATURE must be between 0 and 2.")
+
+    if not (0 <= TOP_P <= 1):
+        raise ConfigurationError("TOP_P must be between 0 and 1.")
+    
+    if TOP_K <= 0:
+        raise ConfigurationError("TOP_K must be greater than zero.")
+
+    return True
 
 
-try:
-    _config = get_config()
-    API_KEY = _config['api_key']
-    MODEL = _config['model']
-    MAX_TOKENS = _config['max_tokens']
-    CONTEXT_BUDGET = _config['context_budget']
-    PROJECT_ROOT = _config['project_root']
-    OUTPUT_DIR = _config['output_dir']
-except MissingAPIKeyError:
-    API_KEY = None
-    MODEL = "gemini-2.5-pro-exp-03-25"
-    MAX_TOKENS = 1024
-    CONTEXT_BUDGET = 6000
-    PROJECT_ROOT = str(Path(__file__).parent.parent.parent)
-    OUTPUT_DIR = str(Path(__file__).parent.parent.parent / "output")
+def get_config() -> dict[str, Any]:
+
+    return {
+        "api_key": API_KEY,
+        "model": MODEL,
+        "max_tokens": MAX_TOKENS,
+        "temperature": TEMPERATURE,
+        "top_p": TOP_P,
+        "top_k": TOP_K,
+        "context_budget": CONTEXT_BUDGET,
+        "project_root": str(PROJECT_ROOT),
+        "output_dir": str(OUTPUT_DIR),
+    }

@@ -1,0 +1,17 @@
+Aura project notes
+
+Aura is the personal assistant I have been building since July. The core loop is a
+Gemini chat with full message history, an approximate token counter, and automatic
+summarization once the conversation passes the context budget of 6000 tokens.
+
+The summarizer keeps the last six messages verbatim and replaces everything older
+with a summary capped at 150 words. That number came from testing: below 100 words
+it started dropping decisions I cared about, above 200 it stopped saving tokens.
+
+Next up is a decision layer so Aura can pick between answering directly, searching
+my notes, and searching the web. After that, a small Streamlit frontend so I can
+demo it without dropping people into a terminal.
+
+Known rough edge: the token counter assumes four characters per token, which runs
+about fifteen percent under the real Gemini count on technical text. Good enough
+for budgeting, not good enough for billing.

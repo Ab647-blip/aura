@@ -1,0 +1,14 @@
+Goals for this year
+
+Ship Aura to a state where someone other than me can use it for a week without me
+sitting next to them. That is the real bar, not feature count.
+
+Get the company to 40 paying accounts. We are at 23. The gap closes through renewals
+and referrals, not cold outreach, which has never worked for us.
+
+Read one technical book a month. So far: Designing Data Intensive Applications in
+January, The Pragmatic Programmer in February, nothing in March, which is the pattern
+I keep repeating whenever work gets busy.
+
+Personal: back to the gym three mornings a week. Mornings only. Every time I have
+tried to schedule it after work it has lost to whatever came up that day.

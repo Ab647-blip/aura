@@ -66,3 +66,5 @@ Desktop.ini
 .coverage
 .coverage.*
 htmlcov/
+store/
+logs/
