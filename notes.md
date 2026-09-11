@@ -1,3 +1,7 @@
+Aura is a personal AI assistant that builds a living understanding of a user's life by connecting their emails, calendar, notes, tasks, documents, memories, goals, and other personal information into a unified knowledge system.
+Unlike traditional chatbots that only respond to questions, Aura continuously remembers, organizes, prioritizes, and reasons over a user's information to provide proactive guidance, personalized recommendations, intelligent reminders, and daily planning.
+The goal is to create an AI that acts like a trusted Chief of Staff—someone who knows what matters, what is pending, what should be prioritized, and helps the user make better decisions and manage their life more effectively.
+
 # T003 Notes
 
 ## Multi-turn Conversation

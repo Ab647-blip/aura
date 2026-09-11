@@ -24,7 +24,7 @@ class APIError(Exception):
 class APIConnectionError(Exception):
     "Raised when the API cannot be reached."
 
-def _build_contents(messages: list[dict[str, str]]) -> list[types.Content]:
+def build_contents(messages: list[dict[str, str]]) -> list[types.Content]:
     contents = []
 
     for message in messages:
@@ -43,7 +43,7 @@ def _build_contents(messages: list[dict[str, str]]) -> list[types.Content]:
     return contents
 
 
-def _extract_text(response: Any) -> str:
+def extract_text(response: Any) -> str:
   
 
     if response.text:
@@ -52,7 +52,7 @@ def _extract_text(response: Any) -> str:
     return ""
 
 
-def _extract_usage(response: Any) -> dict[str, int]:
+def extract_usage(response: Any) -> dict[str, int]:
    
 
     usage = getattr(response, "usage_metadata", None)
@@ -77,7 +77,7 @@ def call_llm(
     max_tokens: int = MAX_TOKENS,
 ) -> dict[str, Any]:
 
-    contents = _build_contents(messages)
+    contents = build_contents(messages)
 
     config = types.GenerateContentConfig(
         system_instruction=system if system else None,
@@ -97,8 +97,8 @@ def call_llm(
     except Exception as e:
         raise APIError(f"Gemini API request failed: {e}") from e
 
-    text = _extract_text(response)
-    usage = _extract_usage(response)
+    text = extract_text(response)
+    usage = extract_usage(response)
 
     return {
         "text": text,

@@ -1,13 +1,11 @@
-from aura.core.llm_client import call_llm
-from aura.core.prompts import AURA_SYSTEM_PROMPT
-from aura.core.tokens import needs_trimming, count_tokens
+from aura.core.agent import respond
 from aura.core.context_manager import compress_history
+from aura.core.tokens import count_tokens, needs_trimming
+
 
 def run_chat() -> None:
     history: list[dict[str, str]] = []
     total_input_tokens = 0
-
-    history = []
 
     print("kush amadid to Aura Chat")
     print("Type 'exit' or 'quit' to leave.\n")
@@ -15,6 +13,13 @@ def run_chat() -> None:
     while True:
         user_input = input("You: ").strip()
 
+        if user_input.lower() in {"exit", "quit"}:
+            print("Goodbye!")
+            break
+
+        if not user_input:
+            continue
+
         history.append(
             {
                 "role": "user",
@@ -22,22 +27,17 @@ def run_chat() -> None:
             }
         )
 
-        response = call_llm(
-            messages=history,
-            system=AURA_SYSTEM_PROMPT,
-        )
-        print(f"Aura: {response['text']}")
+        answer = respond(history)
+
+        print(f"Aura: {answer['text']}")
+
+        if answer["tool"]:
+            print(f"[{answer['tool']} in {answer['tool_seconds']:.1f}s]")
 
         history.append(
             {
                 "role": "assistant",
-                "content": response["text"],
-            }
-        )
-        history.append(
-            {
-                "role": "user",
-                "content": user_input,
+                "content": answer["text"],
             }
         )
 
@@ -52,16 +52,13 @@ def run_chat() -> None:
 
             print(f"[Compression] Tokens: {before} → {after}")
 
-        total_input_tokens += response["usage"]["input_tokens"]
+        total_input_tokens += answer["usage"]["input_tokens"]
 
         print(
             f"[DEBUG] Messages: {len(history)} | "
             f"Total Input Tokens: {total_input_tokens}"
         )
 
-        if user_input.lower() in {"exit", "quit"}:
-            print("Goodbye!")
-            break
 
 if __name__ == "__main__":
     run_chat()
